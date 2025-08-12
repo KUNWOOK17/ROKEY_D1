@@ -117,7 +117,6 @@ class VoiceBringup(Node):
         load_dotenv(os.path.join(PKG_PATH, "resource/.env"))
         openai_api_key = os.getenv("OPENAI_API_KEY", "")
         self.stt = STT(openai_api_key=openai_api_key)
-        self.stt.duration = 10  # 브링업 후 10초간 대기
 
         self.armed = False
         self.timer = self.create_timer(0.05, self.loop)
