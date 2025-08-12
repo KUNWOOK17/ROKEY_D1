@@ -147,27 +147,27 @@ def classify_pose(kps, img_shape):
         ank_mid = midpoint(pts[L_ANK], pts[R_ANK])
         leg_ext = math.hypot(ank_mid[0]-hip_mid[0], ank_mid[1]-hip_mid[1]) / max(h, 1e-6)
 
-    score = {"standing":0.0, "sitting":0.0, "lying":0.0}
+    score = {"wake up":0.0, "wake up":0.0, "sleeping":0.0}
 
     if theta_torso is not None:
-        if theta_torso <= 25: score["standing"] += 0.7
-        elif theta_torso >= 75: score["lying"] += 0.7
-        else: score["sitting"] += 0.6
+        if theta_torso <= 25: score["wake up"] += 0.7
+        elif theta_torso >= 75: score["sleeping"] += 0.7
+        else: score["wake up"] += 0.6
 
     if ar is not None:
-        if ar > 1.2: score["standing"] += 0.2
-        elif ar < 0.8: score["lying"] += 0.2
-        else: score["sitting"] += 0.1
+        if ar > 1.2: score["wake up"] += 0.2
+        elif ar < 0.8: score["sleeping"] += 0.2
+        else: score["wake up"] += 0.1
 
     if knees:
         mk = sum(knees)/len(knees)
-        if mk >= 165: score["standing"] += 0.15
-        elif 60 <= mk <= 140: score["sitting"] += 0.15
+        if mk >= 165: score["wake up"] += 0.15
+        elif 60 <= mk <= 140: score["wake up"] += 0.15
 
     if leg_ext is not None:
-        if leg_ext > 0.45: score["standing"] += 0.2
-        elif leg_ext < 0.25: score["lying"] += 0.15
-        else: score["sitting"] += 0.1
+        if leg_ext > 0.45: score["wake up"] += 0.2
+        elif leg_ext < 0.25: score["sleeping"] += 0.15
+        else: score["wake up"] += 0.1
 
     label = max(score, key=score.get)
     return label, min(1.0, score[label])
@@ -216,7 +216,7 @@ while True:
     if len(q) == QUEUE and counts[current] >= int(STABLE_RATIO*QUEUE) and current != stable_state:
         prev_stable_state = stable_state
         stable_state = current
-        if prev_stable_state == "lying" and stable_state in ("sitting","standing"):
+        if prev_stable_state == "sleeping" and stable_state in ("wake up","wake up"):
             event_armed = True
             event_target = stable_state
             event_start_t = now
@@ -228,8 +228,8 @@ while True:
     sit_up_event = False
     stand_up_event = False
     if event_armed and event_target == stable_state and (now - event_start_t >= WAKE_HOLD):
-        if event_target == "sitting": sit_up_event = True
-        elif event_target == "standing": stand_up_event = True
+        if event_target == "wake up": sit_up_event = True
+        elif event_target == "wake up": stand_up_event = True
         event_armed = False
 
     cv2.putText(frame, f"State: {stable_state}", (20,40),
@@ -246,6 +246,6 @@ while True:
     cv2.imshow("Posture Monitor", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
+    
 cap.release()
 cv2.destroyAllWindows()
